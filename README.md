@@ -109,7 +109,7 @@ Puis allez à l'adresse : `http://127.0.0.1:8080/`
 ## Comment lancer tous les tests en local avec Jest ?
 
 ```
-$ npm run test
+$  npm run test
 ```
 
 ## Comment lancer un seul test ?
@@ -117,8 +117,11 @@ $ npm run test
 Installez jest-cli :
 
 ```
-$npm i -g jest-cli
-$jest src/__tests__/your_test_file.js
+$  npm install -g jest
+$  npm i -g jest-cli
+$  npx jest src/__tests__/Bills.test.js
+$  npm test
+
 ```
 
 ## Comment voir la couverture de test ?
