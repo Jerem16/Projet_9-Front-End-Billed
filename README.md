@@ -118,9 +118,14 @@ Installez jest-cli :
 
 ```
 $  npm install -g jest
+   yarn global add jest
+
 $  npm i -g jest-cli
+   yarn global add jest-cli
+
 $  npx jest src/__tests__/Bills.test.js
-$  npm test
+$  npm run test
+$  npm run coveragef
 
 ```
 

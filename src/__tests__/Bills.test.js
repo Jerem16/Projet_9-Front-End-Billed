@@ -7,6 +7,7 @@ import BillsUI from "../views/BillsUI.js";
 import { bills } from "../fixtures/bills.js";
 import { ROUTES_PATH } from "../constants/routes.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
+import { formatDate } from "../app/format.js";
 
 import router from "../app/Router.js";
 
@@ -35,13 +36,32 @@ describe("Given I am connected as an employee", () => {
 
         test("Then bills should be ordered from earliest to latest", () => {
             document.body.innerHTML = BillsUI({ data: bills });
-            const dates = screen
-                .getAllByText(
-                    /^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$/i
-                )
-                .map((a) => a.innerHTML);
-            const antiChrono = (a, b) => (new Date(a) < new Date(b) ? 1 : -1);
-            const datesSorted = [...dates].sort(antiChrono);
+
+            // Récupérer les dates depuis le DOM
+            const dateElements = screen.getAllByText((content, element) => {
+                const datePattern = /^\d{1,2} [A-Za-z]{3,}\. \d{2}$/; 
+                return (
+                    datePattern.test(content) &&
+                    element.tagName.toLowerCase() === "td"
+                );
+            });
+
+            const dates = dateElements.map((el) => el.innerHTML);
+            console.log(dates);
+
+            // Convertir les dates pour les comparer
+            const dateToComparable = (dateStr) => {
+                const date = new Date(dateStr);
+                return date;
+            };
+
+            const antiChrono = (a, b) =>
+                dateToComparable(a) < dateToComparable(b) ? 1 : -1;
+
+            const datesSorted = [...dates]
+                .sort(antiChrono)
+                .map((date) => formatDate(date));
+
             expect(dates).toEqual(datesSorted);
         });
     });
