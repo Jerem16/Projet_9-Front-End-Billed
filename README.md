@@ -125,13 +125,13 @@ $  npm i -g jest-cli
 
 $  npx jest src/__tests__/Bills.test.js
 $  npm run test
-$  npm run coveragef
+$  npm run coverage
 
 ```
 
 ## Comment voir la couverture de test ?
 
-`http://127.0.0.1:8080/coverage/lcov-report/`
+`http://127.0.0.1:5500/coverage/lcov-report/`
 
 ## Comptes et utilisateurs :
 
