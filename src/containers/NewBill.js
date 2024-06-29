@@ -23,6 +23,17 @@ export default class NewBill {
             .files[0];
         const filePath = e.target.value.split(/\\/g);
         const fileName = filePath[filePath.length - 1];
+        // To-do : empèche la saisie d'un document qui a une extension différente de jpg, jpeg ou png
+        const allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+
+        if (!allowedExtensions.exec(fileName)) {
+            alert(
+                "Invalid file type. Please upload a file with a .jpg, .jpeg, or .png extension."
+            );
+            this.document.querySelector(`input[data-testid="file"]`).value = "";
+            return;
+        }
+
         const formData = new FormData();
         const email = JSON.parse(localStorage.getItem("user")).email;
         formData.append("file", file);
@@ -44,6 +55,7 @@ export default class NewBill {
             })
             .catch((error) => console.error(error));
     };
+
     handleSubmit = (e) => {
         e.preventDefault();
         console.log(
