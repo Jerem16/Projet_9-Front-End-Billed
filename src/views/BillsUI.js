@@ -10,9 +10,7 @@ const row = (bill) => {
   <tr>
     <td data-testid="bills-type">${bill.type}</td>
     <td data-testid="bills-name">${bill.name}</td>
-    <td data-testid="bills-date">${formatDate(
-        bill.date
-    )}</td>
+    <td data-testid="bills-date">${formatDate(bill.date)}</td>
     <td data-testid="bills-amount">${bill.amount} €</td>
     <td data-testid="bills-status">${bill.status}</td>
     <td>
@@ -59,9 +57,8 @@ export default ({ data: bills, loading, error }) => {
         return LoadingPage();
     } else if (error) {
         return ErrorPage(error);
-    }
-
-    return `
+    } else {
+        return `
     <div class='layout'>
       ${VerticalLayout(120)}
       <div class='content'>
@@ -89,4 +86,5 @@ export default ({ data: bills, loading, error }) => {
       </div>
       ${modal()}
     </div>`;
+    }
 };

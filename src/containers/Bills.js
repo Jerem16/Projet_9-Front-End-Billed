@@ -1,12 +1,15 @@
 import { ROUTES_PATH } from "../constants/routes.js";
-import { formatStatus } from "../app/format.js";
+import { formatStatus, verifyDate } from "../app/format.js";
 import Logout from "./Logout.js";
+import mockedBills from "../__mocks__/storeError.js";
+// import mockedBills from "../__mocks__/store.js";
 
 export default class {
     constructor({ document, onNavigate, store, localStorage }) {
         this.document = document;
         this.onNavigate = onNavigate;
         this.store = store;
+        // this.store = mockedBills;
         const buttonNewBill = document.querySelector(
             `button[data-testid="btn-new-bill"]`
         );
@@ -15,12 +18,13 @@ export default class {
         const iconEye = document.querySelectorAll(
             `div[data-testid="icon-eye"]`
         );
-        if (iconEye)
+        if (iconEye) {
             iconEye.forEach((icon) => {
                 icon.addEventListener("click", () =>
                     this.handleClickIconEye(icon)
                 );
             });
+        }
         new Logout({ document, localStorage, onNavigate });
     }
 
@@ -49,8 +53,9 @@ export default class {
                         try {
                             return {
                                 ...doc,
-                                // ! Les fonctions formatDate et sortDate ont été implementées dans BillsUI.js
-                                // date: formatDate(doc.date),
+                                // ! Les fonctions : formatDate() et sortDate() ont été implementées dans BillsUI.js
+                                date: verifyDate(doc.date),
+                                // ? La fonctions : verifyDate() pour entrer dans le catch(e) si la date est corrompu.
                                 status: formatStatus(doc.status),
                             };
                         } catch (e) {
@@ -64,7 +69,6 @@ export default class {
                             };
                         }
                     });
-                    console.log("length", bills.length);
                     return bills;
                 });
         }
