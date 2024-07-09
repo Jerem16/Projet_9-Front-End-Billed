@@ -20,25 +20,18 @@ const mockBills = {
         };
     },
 };
-const mockError = {
-    bills() {
-        return {
-            list: jest.fn().mockRejectedValue(bills),
-        };
-    },
-};
 describe("Given I am connected as an employee", () => {
+    beforeEach(() => {
+        Object.defineProperty(window, "localStorage", {
+            value: localStorageMock,
+        });
+        window.localStorage.setItem(
+            "user",
+            JSON.stringify({ type: "Employee" })
+        );
+    });
     describe("When I am on Bills Page", () => {
         test("Then bill icon in vertical layout should be highlighted", async () => {
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                })
-            );
             const root = document.createElement("div");
             root.setAttribute("id", "root");
             document.body.append(root);
@@ -84,15 +77,6 @@ describe("Given I am connected as an employee", () => {
         //? Ajout de Tests Unitaires et d'Intégration pour containers/Bills
 
         test("Then clicking on New Bill button should navigate to NewBill page", () => {
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                })
-            );
             const onNavigate = jest.fn();
             const billsPage = new Bills({
                 document,
@@ -112,15 +96,6 @@ describe("Given I am connected as an employee", () => {
         });
 
         test("Then getBills should return bills data", async () => {
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                })
-            );
             const onNavigate = jest.fn();
             const billsPage = new Bills({
                 document,
@@ -158,15 +133,6 @@ describe("Given I am connected as an employee", () => {
         });
 
         test("Then getBills should handle error in data formatting", async () => {
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                })
-            );
             const onNavigate = jest.fn();
             const corruptedBill = { ...bills[0], date: "invalid-date" }; // Date invalide pour provoquer une erreur
             const mockStoreWithCorruptedData = {
@@ -233,15 +199,6 @@ describe("Given I am connected as an employee", () => {
         });
 
         test("Then getBills should return undefined if store is null", async () => {
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                })
-            );
             const onNavigate = jest.fn();
             const billsPage = new Bills({
                 document,
@@ -364,13 +321,6 @@ describe("Given I am connected as an employee", () => {
     describe("When the API is called", () => {
         beforeEach(() => {
             document.body.innerHTML = "";
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({ type: "Employee" })
-            );
         });
 
         it("should display a loading message while the API call is pending", async () => {

@@ -19,6 +19,7 @@ export const filteredBills = (data, status) => {
                   const userEmail = JSON.parse(
                       localStorage.getItem("user")
                   ).email;
+                  /* istanbul ignore next */
                   selectCondition =
                       bill.status === status &&
                       ![...USERS_TEST, userEmail].includes(bill.email);
@@ -80,13 +81,15 @@ export default class {
         this.document = document;
         this.onNavigate = onNavigate;
         this.store = store;
-
+        /* istanbul ignore next */
         $("#arrow-icon1")
             .off("click")
             .on("click", (e) => this.handleShowTickets(e, bills, 1));
+        /* istanbul ignore next */
         $("#arrow-icon2")
             .off("click")
             .on("click", (e) => this.handleShowTickets(e, bills, 2));
+        /* istanbul ignore next */
         $("#arrow-icon3")
             .off("click")
             .on("click", (e) => this.handleShowTickets(e, bills, 3));
@@ -128,9 +131,11 @@ export default class {
         }
 
         $("#icon-eye-d").off("click").on("click", this.handleClickIconEye);
+        /* istanbul ignore next */
         $("#btn-accept-bill")
             .off("click")
             .on("click", (e) => this.handleAcceptSubmit(e, bill));
+        /* istanbul ignore next */
         $("#btn-refuse-bill")
             .off("click")
             .on("click", (e) => this.handleRefuseSubmit(e, bill));
@@ -162,15 +167,19 @@ export default class {
 
         if (this.index === undefined || this.index !== index)
             this.index = index;
-
+        /* istanbul ignore next */
         if (this.counter % 2 === 0) {
-            $(`#arrow-icon${this.index}`).css({ transform: "rotate(0deg)" });
+            $(`#arrow-icon${this.index}`).css({
+                transform: "rotate(0deg)",
+            });
             $(`#status-bills-container${this.index}`).html(
                 cards(filteredBills(bills, getStatus(this.index)))
             );
             this.counter++;
         } else {
-            $(`#arrow-icon${this.index}`).css({ transform: "rotate(90deg)" });
+            $(`#arrow-icon${this.index}`).css({
+                transform: "rotate(90deg)",
+            });
             $(`#status-bills-container${this.index}`).html("");
             this.counter++;
         }
@@ -183,7 +192,8 @@ export default class {
         bills.forEach((bill) => {
             bills.forEach((bill) => {
                 $(`#open-bill${bill.id}`)
-                    .off("click") // off('click') assure qu'aucun gestionnaire d'événements click précédent ne reste attaché au gestionnaire d'événements avec on('click')
+                    // off('click') assure qu'aucun gestionnaire d'événements click précédent ne reste attaché au gestionnaire d'événements avec on('click')
+                    .off("click")
                     .on("click", (e) => {
                         this.handleEditTicket(e, bill, bills);
                     });

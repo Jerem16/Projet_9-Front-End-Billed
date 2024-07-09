@@ -89,7 +89,7 @@ export default () => {
                     });
                 })
                 .catch((error) => {
-                    rootDiv.innerHTML = ErrorPage({ error });
+                    rootDiv.innerHTML = ROUTES({ pathname, error });
                 });
         }
     };
@@ -188,7 +188,11 @@ export default () => {
                     });
                 })
                 .catch((error) => {
-                    rootDiv.innerHTML = ErrorPage({ error });
+                    // rootDiv.innerHTML = ErrorPage({ error });
+                    rootDiv.innerHTML = ROUTES({
+                        pathname: window.location.hash,
+                        error,
+                    });
                 });
         }
     }
