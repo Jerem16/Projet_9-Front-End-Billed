@@ -22,46 +22,45 @@ export default class NewBill {
         const file = this.document.querySelector(`input[data-testid="file"]`)
             .files[0];
         const filePath = e.target.value.split(/\\/g);
-        const fileName = filePath[filePath.length - 1];
         // To-do : empèche la saisie d'un document qui a une extension différente de jpg, jpeg ou png
-        const allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+        const allowedExtensions = ["image/jpg", "image/jpeg", "image/png"];
+        const submitButton = this.document.querySelector("#btn-send-bill");
+        const fileNamed = this.document.querySelector("#fileName");
+        if (allowedExtensions.includes(file.type)) {
+            submitButton.removeAttribute("disabled");
+            const fileName = filePath[filePath.length - 1];
+            const formData = new FormData();
+            const email = JSON.parse(localStorage.getItem("user")).email;
+            formData.append("file", file);
+            formData.append("email", email);
 
-        if (!allowedExtensions.exec(fileName)) {
+            this.store
+                .bills()
+                .create({
+                    data: formData,
+                    headers: {
+                        noContentType: true,
+                    },
+                })
+                .then(({ fileUrl, key }) => {
+                    console.log(fileUrl);
+                    this.billId = key;
+                    this.fileUrl = fileUrl;
+                    this.fileName = fileName;
+                })
+                .catch((error) => console.error(error));
+        } else {
+            file.value = "";
+            fileNamed.value = "";
             alert(
                 "Invalid file type. Please upload a file with a .jpg, .jpeg, or .png extension."
             );
-            this.document.querySelector(`input[data-testid="file"]`).value = "";
-            return;
+            submitButton.setAttribute("disabled", "true");
         }
-
-        const formData = new FormData();
-        const email = JSON.parse(localStorage.getItem("user")).email;
-        formData.append("file", file);
-        formData.append("email", email);
-
-        this.store
-            .bills()
-            .create({
-                data: formData,
-                headers: {
-                    noContentType: true,
-                },
-            })
-            .then(({ fileUrl, key }) => {
-                console.log(fileUrl);
-                this.billId = key;
-                this.fileUrl = fileUrl;
-                this.fileName = fileName;
-            })
-            .catch((error) => console.error(error));
     };
 
     handleSubmit = (e) => {
         e.preventDefault();
-        console.log(
-            'e.target.querySelector(`input[data-testid="datepicker"]`).value',
-            e.target.querySelector(`input[data-testid="datepicker"]`).value
-        );
         const email = JSON.parse(localStorage.getItem("user")).email;
         const bill = {
             email,

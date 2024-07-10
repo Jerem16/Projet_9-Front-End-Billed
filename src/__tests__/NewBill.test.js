@@ -2,41 +2,21 @@
  * @jest-environment jsdom
  */
 
-import { screen, fireEvent } from "@testing-library/dom";
+import { fireEvent, screen, waitFor } from "@testing-library/dom";
+import userEvent from "@testing-library/user-event";
+import { ROUTES_PATH } from "../constants/routes";
+import { localStorageMock } from "../__mocks__/localStorage.js";
+import mockStore from "../__mocks__/store.js";
+import router from "../app/Router.js";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
-import mockStore from "../__mocks__/store.js";
-import { localStorageMock } from "../__mocks__/localStorage.js";
 import { bills } from "../fixtures/bills.js";
-import Bills from "../containers/Bills.js";
-import BillsUI from "../views/BillsUI.js";
-import { formatStatus, formatDate, verifyDate } from "../app/format.js";
-import { ROUTES_PATH } from "../constants/routes.js";
-import router from "../app/Router.js";
-
 describe("Given I am connected as an employee", () => {
     describe("When I am on NewBill Page", () => {
-        beforeEach(() => {
-            document.body.innerHTML = NewBillUI();
-        });
-
-        test("Then all form fields should be rendered", () => {
-            expect(screen.getByTestId("expense-type")).toBeTruthy();
-            expect(screen.getByTestId("expense-name")).toBeTruthy();
-            expect(screen.getByTestId("datepicker")).toBeTruthy();
-            expect(screen.getByTestId("amount")).toBeTruthy();
-            expect(screen.getByTestId("vat")).toBeTruthy();
-            expect(screen.getByTestId("pct")).toBeTruthy();
-            expect(screen.getByTestId("commentary")).toBeTruthy();
-            expect(screen.getByTestId("file")).toBeTruthy();
-            expect(screen.getByText("Envoyer")).toBeTruthy();
-        });
-    });
-    describe("When I am on NewBill Page", () => {
+        let newBillPage;
         beforeEach(() => {
             document.body.innerHTML = NewBillUI();
 
-            // Mocking localStorage
             Object.defineProperty(window, "localStorage", {
                 value: localStorageMock,
             });
@@ -45,18 +25,32 @@ describe("Given I am connected as an employee", () => {
                 JSON.stringify({ email: "test@test.com" })
             );
 
-            // Mocking the store
             const onNavigate = (pathname) => {
                 document.body.innerHTML = pathname;
             };
 
-            const store = mockStore;
-
-            new NewBill({
+            newBillPage = new NewBill({
                 document,
                 onNavigate,
-                store,
+                store: mockStore,
                 localStorage: window.localStorage,
+            });
+        });
+
+        test("Then all form fields should be rendered", () => {
+            const fields = [
+                "expense-type",
+                "expense-name",
+                "datepicker",
+                "amount",
+                "vat",
+                "pct",
+                "commentary",
+                "file",
+                "submit",
+            ];
+            fields.forEach((field) => {
+                expect(screen.getByTestId(field)).toBeTruthy();
             });
         });
 
@@ -65,8 +59,7 @@ describe("Given I am connected as an employee", () => {
             const handleChangeFile = jest.fn((e) => {
                 e.preventDefault();
                 const file = e.target.files[0];
-                const filePath = e.target.value.split(/\\/g);
-                const fileName = filePath[filePath.length - 1];
+                const fileName = file.name;
                 const allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
 
                 if (!allowedExtensions.exec(fileName)) {
@@ -95,59 +88,25 @@ describe("Given I am connected as an employee", () => {
             expect(handleChangeFile).toHaveBeenCalled();
             expect(fileInput.files[0].name).toBe("test.jpg");
         });
-    });
-    describe("When I am on NewBill Page", () => {
-        beforeEach(() => {
-            document.body.innerHTML = NewBillUI();
-
-            // Mocking localStorage
-            Object.defineProperty(window, "localStorage", {
-                value: localStorageMock,
-            });
-            window.localStorage.setItem(
-                "user",
-                JSON.stringify({ email: "test@test.com" })
-            );
-
-            // Mocking the store
-            const onNavigate = (pathname) => {
-                document.body.innerHTML = pathname;
-            };
-
-            const store = mockStore;
-
-            new NewBill({
-                document,
-                onNavigate,
-                store,
-                localStorage: window.localStorage,
-            });
-        });
 
         test("Then form submission should send the correct data", () => {
             const form = screen.getByTestId("form-new-bill");
 
-            fireEvent.change(screen.getByTestId("expense-type"), {
-                target: { value: "Transports" },
-            });
-            fireEvent.change(screen.getByTestId("expense-name"), {
-                target: { value: "Vol Paris Londres" },
-            });
-            fireEvent.change(screen.getByTestId("datepicker"), {
-                target: { value: "2023-05-25" },
-            });
-            fireEvent.change(screen.getByTestId("amount"), {
-                target: { value: "348" },
-            });
-            fireEvent.change(screen.getByTestId("vat"), {
-                target: { value: "70" },
-            });
-            fireEvent.change(screen.getByTestId("pct"), {
-                target: { value: "20" },
-            });
-            fireEvent.change(screen.getByTestId("commentary"), {
-                target: { value: "Business trip" },
-            });
+            const formData = {
+                "expense-type": "Transports",
+                "expense-name": "Vol Paris Londres",
+                datepicker: "2023-05-25",
+                amount: "348",
+                vat: "70",
+                pct: "20",
+                commentary: "Business trip",
+            };
+
+            for (const [key, value] of Object.entries(formData)) {
+                fireEvent.change(screen.getByTestId(key), {
+                    target: { value },
+                });
+            }
 
             const handleSubmit = jest.fn((e) => {
                 e.preventDefault();
@@ -185,10 +144,153 @@ describe("Given I am connected as an employee", () => {
             });
 
             form.addEventListener("submit", handleSubmit);
-
             fireEvent.submit(form);
 
             expect(handleSubmit).toHaveBeenCalled();
+        });
+
+        test("Then the mail icon should be highlighted", async () => {
+            document.body.innerHTML = "";
+            Object.defineProperty(window, "localStorage", {
+                value: localStorageMock,
+            });
+            window.localStorage.setItem(
+                "user",
+                JSON.stringify({ type: "Employee" })
+            );
+            const root = document.createElement("div");
+            root.setAttribute("id", "root");
+            document.body.append(root);
+            router();
+            window.onNavigate(ROUTES_PATH.NewBill);
+
+            await waitFor(() => screen.getByTestId("icon-mail"));
+            const mailIcon = screen.getByTestId("icon-mail");
+            expect(mailIcon.classList).toContain("active-icon");
+        });
+
+        test("Then the invoices are then added, API POST test.", async () => {
+            const billTest = {
+                id: "47qAXb6fIm2zOKkLzMro",
+                vat: "80",
+                fileUrl:
+                    "https://test.storage.tld/v0/b/billable-677b6.a…f-1.jpg?alt=media&token=c1640e12-a24b-4b11-ae52-529112e9602a",
+                status: "pending",
+                type: "Hôtel et logement",
+                commentary: "séminaire billed",
+                name: "encore",
+                fileName: "preview-facture-free-201801-pdf-1.jpg",
+                date: "2004-04-04",
+                amount: 400,
+                commentAdmin: "ok",
+                email: "a@a",
+                pct: 20,
+            };
+
+            const form = screen.getByTestId("form-new-bill");
+
+            const formData = {
+                "expense-type": billTest.type,
+                "expense-name": billTest.name,
+                datepicker: billTest.date,
+                amount: billTest.amount,
+                vat: billTest.vat,
+                pct: billTest.pct,
+                commentary: billTest.commentary,
+            };
+
+            for (const [key, value] of Object.entries(formData)) {
+                fireEvent.change(screen.getByTestId(key), {
+                    target: { value },
+                });
+            }
+
+            newBillPage.fileName = billTest.fileName;
+            newBillPage.fileUrl = billTest.fileUrl;
+
+            const virtualUpdateBill = (newBillPage.updateBill = jest.fn());
+            const virtualHandleSubmit = jest.fn((e) =>
+                newBillPage.handleSubmit(e)
+            );
+            form.addEventListener("submit", virtualHandleSubmit);
+            fireEvent.submit(form);
+
+            expect(virtualHandleSubmit).toHaveBeenCalled();
+            expect(virtualUpdateBill).toHaveBeenCalled();
+        });
+        describe("When I import a unsupported format file (other than png, jpeg or jpg)", () => {
+            test("Then the supporting file submitted is not correct, the submit button is disabled.", async () => {
+                const buttonChangeFile = screen.getByTestId("file");
+                const fakeHandleChangeFile = jest.fn((e) =>
+                    newBillPage.handleChangeFile(e)
+                );
+                buttonChangeFile.addEventListener(
+                    "change",
+                    fakeHandleChangeFile
+                );
+
+                fireEvent.change(buttonChangeFile, {
+                    target: {
+                        files: [
+                            new File([""], "file.doc", {
+                                type: "application/msword",
+                            }),
+                        ],
+                    },
+                });
+
+                expect(buttonChangeFile.files[0].name).toBe("file.doc");
+                const sendButton = screen.getByTestId("submit");
+                expect(fakeHandleChangeFile).toHaveBeenCalled();
+                expect(sendButton.disabled).toBe(true);
+            });
+        });
+        describe("When I import a supported format file (png, jpeg or jpg)", () => {
+            test("Then the supporting file submitted is correct, the send button is active.", async () => {
+                const buttonChangeFile = await screen.getByTestId("file");
+                const fakeHandleChangeFile = jest.fn((e) =>
+                    newBillPage.handleChangeFile(e)
+                );
+                fireEvent.change(buttonChangeFile, {
+                    target: {
+                        files: [
+                            new File(["file.png"], "file.png", {
+                                type: "file/png",
+                            }),
+                        ],
+                    },
+                });
+
+                buttonChangeFile.addEventListener("click", (e) => {
+                    fakeHandleChangeFile(e);
+                });
+                fireEvent.click(buttonChangeFile);
+                expect(buttonChangeFile.files[0].name).toBe("file.png");
+                const sendButton = screen.getByTestId("submit");
+                expect(fakeHandleChangeFile).toHaveBeenCalled();
+                expect(sendButton.getAttribute("disabled")).toBeTruthy;
+            });
+        });
+        describe("When I submit a valid form", () => {
+            test("should create a new bill", async () => {
+                // Spy on the handleSubmit and updateBill methods
+                const handleSubmitSpy = jest.spyOn(newBillPage, "handleSubmit");
+                const updateBillSpy = jest.spyOn(newBillPage, "updateBill");
+                // Get the form and submit button elements
+                const form = screen.getByTestId("form-new-bill");
+                const submitBtn = form.querySelector("#btn-send-bill");
+                // Add an event listener for form submission
+                form.addEventListener("submit", (e) => {
+                    newBillPage.handleSubmit(e);
+                });
+                // Simulate a click on the submit button
+                userEvent.click(submitBtn);
+                // Wait for assertions to complete
+                await waitFor(() => {
+                    expect(handleSubmitSpy).toHaveBeenCalled();
+                    expect(updateBillSpy).toHaveBeenCalled();
+                });
+            });
         });
     });
 });
