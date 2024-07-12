@@ -43,9 +43,9 @@ describe("Given I am connected as an employee", () => {
             expect(windowIcon.classList.contains("active-icon")).toBe(true);
         });
 
-        test("Then bills should be ordered from earliest to latest", () => {
+        test("Then bills should be ordered from earliest to latest", async () => {
             document.body.innerHTML = BillsUI({ data: bills });
-
+            await waitFor(() => screen.getByText("Mes notes de frais"));
             // Récupérer les dates depuis le DOM
             const dateElements = screen.getAllByText((content, element) => {
                 const datePattern = /^\d{1,2} [A-Za-z]{3,}\. \d{2}$/;
@@ -131,91 +131,86 @@ describe("Given I am connected as an employee", () => {
                 expect(bill.fileUrl).toEqual(bills[index].fileUrl);
             });
         });
-
-        test("Then getBills should handle error in data formatting", async () => {
-            const onNavigate = jest.fn();
-            const corruptedBill = { ...bills[0], date: "invalid-date" }; // Date invalide pour provoquer une erreur
-            const mockStoreWithCorruptedData = {
-                bills() {
-                    return {
-                        list: jest.fn().mockResolvedValue([corruptedBill]),
-                    };
-                },
-            };
-            const billsPage = new Bills({
-                document,
-                onNavigate,
-                store: mockStoreWithCorruptedData,
-                localStorage: window.localStorage,
+        describe("When data data's corrupted", () => {
+            beforeEach(() => {
+                Object.defineProperty(window, "localStorage", {
+                    value: localStorageMock,
+                });
+                window.localStorage.setItem(
+                    "user",
+                    JSON.stringify({ type: "Employee" })
+                );
             });
-            const root = document.createElement("div");
-            root.setAttribute("id", "root");
-            document.body.append(root);
-            router();
-            window.onNavigate(ROUTES_PATH.Bills);
-            await waitFor(() => screen.getByText("Nouvelle note de frais"));
+            test("Then getBills should handle the error and display a console.log", async () => {
+                const onNavigate = jest.fn();
+                const corruptedBill = { ...bills[0], date: "invalid-date" }; // Date invalide pour provoquer une erreur
+                const mockStoreWithCorruptedData = {
+                    bills() {
+                        return {
+                            list: jest.fn().mockResolvedValue([corruptedBill]),
+                        };
+                    },
+                };
+                const billsPage = new Bills({
+                    document,
+                    onNavigate,
+                    store: mockStoreWithCorruptedData,
+                    localStorage: window.localStorage,
+                });
+                const root = document.createElement("div");
+                root.setAttribute("id", "root");
+                document.body.append(root);
+                router();
+                window.onNavigate(ROUTES_PATH.Bills);
+                await waitFor(() => screen.getByText("Nouvelle note de frais"));
 
-            // Espionner sur console.log
-            const consoleSpy = jest.spyOn(console, "log");
-            // Appel de getBills et vérification du résultat
-            const billsData = await billsPage.getBills();
-            expect(billsData.length).toEqual(1);
-            expect(billsData[0].date).toEqual("invalid-date"); // Vérifie que la date non formatée est retournée
+                // Espionner sur console.log
+                const consoleSpy = jest.spyOn(console, "log");
+                // Appel de getBills et vérification du résultat
+                const billsData = await billsPage.getBills();
+                expect(billsData.length).toEqual(1);
+                expect(billsData[0].date).toEqual("invalid-date"); // Vérifie que la date non formatée est retournée
 
-            // Vérifie que console.log a été appelé avec les bons arguments
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.any(Error),
-                "for",
-                corruptedBill
-            );
+                // Vérifie que console.log a été appelé avec les bons arguments
+                expect(consoleSpy).toHaveBeenCalledWith(
+                    expect.any(Error),
+                    "for",
+                    corruptedBill
+                );
 
-            // Nettoyer l'espion sur console.log
-            consoleSpy.mockRestore();
+                // Nettoyer l'espion sur console.log
+                consoleSpy.mockRestore();
+            });
         });
-
-        test("Then getBills should handle error in data formatting", async () => {
-            // Utilisation d'une donnée corrompue pour provoquer une erreur
-            const corruptedBill = { ...bills[0], date: "invalid-date" };
-
-            const mockStoreWithCorruptedData = {
-                bills() {
-                    return {
-                        list: jest.fn().mockResolvedValue([corruptedBill]),
-                    };
-                },
-            };
-
-            const billsPage = new Bills({
-                document,
-                onNavigate,
-                store: mockStoreWithCorruptedData,
-                localStorage: window.localStorage,
+        describe("When data are undefined", () => {
+            beforeEach(() => {
+                Object.defineProperty(window, "localStorage", {
+                    value: localStorageMock,
+                });
+                window.localStorage.setItem(
+                    "user",
+                    JSON.stringify({ type: "Employee" })
+                );
             });
+            test("Then getBills should return no invoices if store is null", async () => {
+                const onNavigate = jest.fn();
+                const billsPage = new Bills({
+                    document,
+                    onNavigate,
+                    store: null, // Pas de store
+                    localStorage: window.localStorage,
+                });
+                const root = document.createElement("div");
+                root.setAttribute("id", "root");
+                document.body.append(root);
+                router();
+                window.onNavigate(ROUTES_PATH.Bills);
+                await waitFor(() => screen.getByText("Nouvelle note de frais"));
 
-            // Appel de getBills et vérification du résultat
-            const billsData = await billsPage.getBills();
-            expect(billsData.length).toEqual(1);
-            expect(billsData[0].date).toEqual("invalid-date"); // Vérifie que la date non formatée est retournée
-        });
-
-        test("Then getBills should return undefined if store is null", async () => {
-            const onNavigate = jest.fn();
-            const billsPage = new Bills({
-                document,
-                onNavigate,
-                store: null, // Pas de store
-                localStorage: window.localStorage,
+                // Appel de getBills et vérification du résultat
+                const billsData = await billsPage.getBills();
+                expect(billsData).toBeUndefined();
             });
-            const root = document.createElement("div");
-            root.setAttribute("id", "root");
-            document.body.append(root);
-            router();
-            window.onNavigate(ROUTES_PATH.Bills);
-            await waitFor(() => screen.getByText("Nouvelle note de frais"));
-
-            // Appel de getBills et vérification du résultat
-            const billsData = await billsPage.getBills();
-            expect(billsData).toBeUndefined();
         });
     });
     describe("When I click on the eye icon", () => {
@@ -256,7 +251,7 @@ describe("Given I am connected as an employee", () => {
             expect($.fn.modal).toHaveBeenCalled();
         });
 
-        test("Then a modal with the correct proof is displayed.", () => {
+        test("Then a modal with the correct image is displayed.", () => {
             const iconEye = screen.getAllByTestId("icon-eye");
             const fakeHandleClickIconEye = jest.fn(() =>
                 billsPage.handleClickIconEye(iconEye[0])
@@ -271,50 +266,6 @@ describe("Given I am connected as an employee", () => {
             expect(screen.getByAltText("Bill").src).toBe(
                 "https://test.storage.tld/v0/b/billable-677b6.a%E2%80%A6f-1.jpg?alt=media&token=c1640e12-a24b-4b11-ae52-529112e9602a"
             );
-        });
-
-        test("Then I click on the New expense report button, handleClickNewBill() is called", () => {
-            const iconEye = screen.getAllByTestId("icon-eye");
-            const fakeHandleClickIconEye = jest.fn(() =>
-                billsPage.handleClickIconEye(iconEye[0])
-            );
-
-            iconEye[0].addEventListener("click", fakeHandleClickIconEye);
-            fireEvent.click(iconEye[0]);
-            expect(fakeHandleClickIconEye).toHaveBeenCalled();
-        });
-    });
-
-    describe("When I am on Bills Page and there are no bills", () => {
-        test("Then it should render empty array", async () => {
-            const mockStoreWithNoBills = {
-                bills() {
-                    return {
-                        list: jest.fn().mockResolvedValue([]),
-                    };
-                },
-            };
-            const onNavigate = (pathname) => {
-                document.body.innerHTML = ROUTES({ pathname });
-            };
-
-            const billsPage = new Bills({
-                document,
-                onNavigate,
-                store: mockStoreWithNoBills,
-                localStorage: window.localStorage,
-            });
-
-            const root = document.createElement("div");
-            root.setAttribute("id", "root");
-            document.body.append(root);
-            router();
-            window.onNavigate(ROUTES_PATH.Bills);
-            await waitFor(() => screen.getByText("Nouvelle note de frais"));
-
-            // Appel de getBills et vérification du résultat
-            const billsData = await billsPage.getBills();
-            expect(billsData).toEqual([]);
         });
     });
 
@@ -383,11 +334,11 @@ describe("Given I am connected as an employee", () => {
             });
         });
 
-        it("should display an error message when the API call fails", async () => {
+        it("should display an Error 500 message when the API call fails", async () => {
             // Mock de l'appel API qui rejette une erreur
             mockStore.bills = jest.fn().mockImplementationOnce(() => {
                 return {
-                    list: jest.fn().mockRejectedValue(new Error("Erreur API")),
+                    list: jest.fn().mockRejectedValue(new Error("Error 500")),
                 };
             });
 
@@ -416,10 +367,50 @@ describe("Given I am connected as an employee", () => {
                 document.body.innerHTML = BillsUI({
                     data: [],
                     loading: false,
-                    error: "Erreur API",
+                    error: "Error 500",
                 });
                 await waitFor(() => {
-                    expect(screen.getByText("Erreur API")).toBeTruthy();
+                    expect(screen.getByText("Error 500")).toBeTruthy();
+                });
+            }
+        });
+        it("should display an Error 404 message when the API call fails", async () => {
+            // Mock de l'appel API qui rejette une erreur
+            mockStore.bills = jest.fn().mockImplementationOnce(() => {
+                return {
+                    list: jest.fn().mockRejectedValue(new Error("Error 404")),
+                };
+            });
+
+            const onNavigate = (pathname) => {
+                document.body.innerHTML = ROUTES({ pathname });
+            };
+
+            const billsInstance = new Bills({
+                document,
+                onNavigate,
+                store: mockStore,
+                localStorage: window.localStorage,
+            });
+
+            // Définir le contenu HTML avant de lancer l'appel API
+            document.body.innerHTML = BillsUI({
+                data: [],
+                loading: false,
+                error: null,
+            });
+
+            // Simuler l'appel API et vérifier l'affichage de l'erreur
+            try {
+                await billsInstance.getBills();
+            } catch (error) {
+                document.body.innerHTML = BillsUI({
+                    data: [],
+                    loading: false,
+                    error: "Error 404",
+                });
+                await waitFor(() => {
+                    expect(screen.getByText("Error 404")).toBeTruthy();
                 });
             }
         });

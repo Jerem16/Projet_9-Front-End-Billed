@@ -1,7 +1,7 @@
 import { ROUTES_PATH } from "../constants/routes.js";
 import { formatStatus, verifyDate } from "../app/format.js";
 import Logout from "./Logout.js";
-import mockedBills from "../__mocks__/storeError.js";
+// import mockedBills from "../__mocks__/storeError.js";
 // import mockedBills from "../__mocks__/store.js";
 
 export default class {

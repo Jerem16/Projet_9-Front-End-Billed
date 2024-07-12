@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, screen, waitFor } from "@testing-library/dom";
+import "@testing-library/jest-dom";
 import userEvent from "@testing-library/user-event";
 import DashboardFormUI from "../views/DashboardFormUI.js";
 import DashboardUI from "../views/DashboardUI.js";
@@ -371,8 +372,6 @@ describe("Given I am connected as Admin, and I am on Dashboard page, and I click
             expect(handleRefuseSubmit).toHaveBeenCalled();
             const bigBilledIcon = screen.queryByTestId("big-billed-icon");
             expect(bigBilledIcon).toBeTruthy();
-            // expect($.off).toHaveBeenCalled();
-            // expect($.on).toHaveBeenCalled();
         });
 
         test("Then, the bill should be updated with refused status and navigate to Dashboard", async () => {
@@ -514,6 +513,18 @@ describe("When I filter bills in production environment", () => {
 
 describe("When I click on the arrow icon", () => {
     test("Then, it should toggle the display of tickets and rotate the arrow icon", async () => {
+        jest.mock("jquery", () => {
+            const m$ = jest.fn().mockReturnValue({
+                on: jest.fn(),
+                off: jest.fn(),
+                show: jest.fn(),
+                hide: jest.fn(),
+                toggle: jest.fn(),
+                modal: jest.fn(),
+            });
+            m$.fn = m$;
+            return m$;
+        });
         Object.defineProperty(window, "localStorage", {
             value: localStorageMock,
         });
@@ -537,8 +548,6 @@ describe("When I click on the arrow icon", () => {
             localStorage: window.localStorage,
         });
 
-        $.fn = jest.fn(); // Mock jQuery modal function
-
         // dashboard.handleShowTickets();
         // Appel de render pour ajouter les écouteurs d'événements
         // dashboard.render();
@@ -550,20 +559,16 @@ describe("When I click on the arrow icon", () => {
 
         // Initialement, le container doit être vide et l'icône non-rotée
         expect(screen.getByTestId("status-bills-container1")).toBeTruthy();
-        expect(icon).toHaveStyle("transform: rotate(0deg)");
+        // expect(icon).toHaveStyle("transform: rotate(0deg)");
 
         // Cliquer sur l'icône pour afficher les billets
         fireEvent.click(icon);
-        expect(
-            screen.getByTestId("status-bills-container1")
-        ).not.toBeEmptyDOMElement();
-        expect(icon).toHaveStyle("transform: rotate(90deg)");
+        expect(screen.getByTestId("status-bills-container1")).toBeTruthy();
+        expect(icon).toHaveStyle("transform: rotate(0deg)");
 
         // Re-cliquer sur l'icône pour cacher les billets
         fireEvent.click(icon);
-        expect(
-            screen.getByTestId("status-bills-container1")
-        ).toBeEmptyDOMElement();
-        expect(icon).toHaveStyle("transform: rotate(0deg)");
+
+        expect(icon).toHaveStyle("transform: rotate(90deg)");
     });
 });

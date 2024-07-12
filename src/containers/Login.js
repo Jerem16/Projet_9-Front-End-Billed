@@ -49,6 +49,7 @@ export default class Login {
     };
 
     handleSubmitAdmin = (e) => {
+        // To do Erreur employee not admin `input[data-testid="employee-password-input"]`
         e.preventDefault();
         const user = {
             type: "Admin",

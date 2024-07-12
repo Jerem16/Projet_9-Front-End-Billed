@@ -48,7 +48,7 @@ export default class NewBill {
                     this.fileUrl = fileUrl;
                     this.fileName = fileName;
                 })
-                .catch((error) => console.error(error));
+                // .catch((error) => console.error(error));
         } else {
             file.value = "";
             fileNamed.value = "";
