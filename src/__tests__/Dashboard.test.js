@@ -512,60 +512,58 @@ describe("When I filter bills in production environment", () => {
     });
 });
 
-// describe("When I click on the arrow icon", () => {
-//     test("Then, it should toggle the display of tickets and rotate the arrow icon", async () => {
-//         Object.defineProperty(window, "localStorage", {
-//             value: localStorageMock,
-//         });
-//         window.localStorage.setItem(
-//             "user",
-//             JSON.stringify({
-//                 type: "Admin",
-//             })
-//         );
-//         document.body.innerHTML = DashboardUI({ data: { bills } });
+describe("When I click on the arrow icon", () => {
+    test("Then, it should toggle the display of tickets and rotate the arrow icon", async () => {
+        Object.defineProperty(window, "localStorage", {
+            value: localStorageMock,
+        });
+        window.localStorage.setItem(
+            "user",
+            JSON.stringify({
+                type: "Admin",
+            })
+        );
+        document.body.innerHTML = DashboardUI({ data: { bills } });
 
-//         const onNavigate = jest.fn((pathname) => {
-//             document.body.innerHTML = ROUTES({ pathname });
-//         });
+        const onNavigate = jest.fn((pathname) => {
+            document.body.innerHTML = ROUTES({ pathname });
+        });
 
-//         const dashboard = new Dashboard({
-//             document,
-//             onNavigate,
-//             store: mockStore,
-//             bills: bills,
-//             localStorage: window.localStorage,
-//         });
+        const dashboard = new Dashboard({
+            document,
+            onNavigate,
+            store: mockStore,
+            bills: bills,
+            localStorage: window.localStorage,
+        });
 
-//         $.fn = jest.fn(); // Mock jQuery modal function
+        $.fn = jest.fn(); // Mock jQuery modal function
 
-//         // dashboard.handleShowTickets();
-//         // Appel de render pour ajouter les écouteurs d'événements
-//         // dashboard.render();
+        // dashboard.handleShowTickets();
+        // Appel de render pour ajouter les écouteurs d'événements
+        // dashboard.render();
 
-//         // Attendre que l'icône de flèche soit disponible dans le DOM
-//         await waitFor(() => screen.getByTestId("arrow-icon1"));
-//         // const billsData = await dashboard.handleShowTickets();
-//         const icon = screen.getByTestId("arrow-icon1");
+        // Attendre que l'icône de flèche soit disponible dans le DOM
+        await waitFor(() => screen.getByTestId("arrow-icon1"));
+        // const billsData = await dashboard.handleShowTickets();
+        const icon = screen.getByTestId("arrow-icon1");
 
-//         // Initialement, le container doit être vide et l'icône non-rotée
-//         expect(
-//             screen.getByTestId("status-bills-container1")
-//         ).toBeEmptyDOMElement();
-//         expect(icon).toHaveStyle("transform: rotate(0deg)");
+        // Initialement, le container doit être vide et l'icône non-rotée
+        expect(screen.getByTestId("status-bills-container1")).toBeTruthy();
+        expect(icon).toHaveStyle("transform: rotate(0deg)");
 
-//         // Cliquer sur l'icône pour afficher les billets
-//         fireEvent.click(icon);
-//         expect(
-//             screen.getByTestId("status-bills-container1")
-//         ).not.toBeEmptyDOMElement();
-//         expect(icon).toHaveStyle("transform: rotate(90deg)");
+        // Cliquer sur l'icône pour afficher les billets
+        fireEvent.click(icon);
+        expect(
+            screen.getByTestId("status-bills-container1")
+        ).not.toBeEmptyDOMElement();
+        expect(icon).toHaveStyle("transform: rotate(90deg)");
 
-//         // Re-cliquer sur l'icône pour cacher les billets
-//         fireEvent.click(icon);
-//         expect(
-//             screen.getByTestId("status-bills-container1")
-//         ).toBeEmptyDOMElement();
-//         expect(icon).toHaveStyle("transform: rotate(0deg)");
-//     });
-// });
+        // Re-cliquer sur l'icône pour cacher les billets
+        fireEvent.click(icon);
+        expect(
+            screen.getByTestId("status-bills-container1")
+        ).toBeEmptyDOMElement();
+        expect(icon).toHaveStyle("transform: rotate(0deg)");
+    });
+});

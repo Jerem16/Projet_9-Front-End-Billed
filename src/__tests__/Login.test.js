@@ -5,7 +5,7 @@
 import LoginUI from "../views/LoginUI";
 import Login from "../containers/Login.js";
 import { ROUTES } from "../constants/routes";
-import { fireEvent, screen } from "@testing-library/dom";
+import { fireEvent, screen, waitFor } from "@testing-library/dom";
 
 describe("Given that I am a user on login page", () => {
     describe("When I do not fill fields and I click on employee button Login In", () => {
@@ -53,78 +53,6 @@ describe("Given that I am a user on login page", () => {
             form.addEventListener("submit", handleSubmit);
             fireEvent.submit(form);
             expect(screen.getByTestId("form-employee")).toBeTruthy();
-        });
-    });
-
-    describe("When I do fill fields in correct format and I click on employee button Login In", () => {
-        test("Then I should be identified as an Employee in app", () => {
-            document.body.innerHTML = LoginUI();
-            const inputData = {
-                email: "johndoe@email.com",
-                password: "azerty",
-            };
-
-            const inputEmailUser = screen.getByTestId("employee-email-input");
-            fireEvent.change(inputEmailUser, {
-                target: { value: inputData.email },
-            });
-            expect(inputEmailUser.value).toBe(inputData.email);
-
-            const inputPasswordUser = screen.getByTestId(
-                "employee-password-input"
-            );
-            fireEvent.change(inputPasswordUser, {
-                target: { value: inputData.password },
-            });
-            expect(inputPasswordUser.value).toBe(inputData.password);
-
-            const form = screen.getByTestId("form-employee");
-
-            // localStorage should be populated with form data
-            Object.defineProperty(window, "localStorage", {
-                value: {
-                    getItem: jest.fn(() => null),
-                    setItem: jest.fn(() => null),
-                },
-                writable: true,
-            });
-
-            // we have to mock navigation to test it
-            const onNavigate = (pathname) => {
-                document.body.innerHTML = ROUTES({ pathname });
-            };
-
-            let PREVIOUS_LOCATION = "";
-
-            const store = jest.fn();
-
-            const login = new Login({
-                document,
-                localStorage: window.localStorage,
-                onNavigate,
-                PREVIOUS_LOCATION,
-                store,
-            });
-
-            const handleSubmit = jest.fn(login.handleSubmitEmployee);
-            login.login = jest.fn().mockResolvedValue({});
-            form.addEventListener("submit", handleSubmit);
-            fireEvent.submit(form);
-            expect(handleSubmit).toHaveBeenCalled();
-            expect(window.localStorage.setItem).toHaveBeenCalled();
-            expect(window.localStorage.setItem).toHaveBeenCalledWith(
-                "user",
-                JSON.stringify({
-                    type: "Employee",
-                    email: inputData.email,
-                    password: inputData.password,
-                    status: "connected",
-                })
-            );
-        });
-
-        test("It should renders Bills page", () => {
-            expect(screen.getAllByText("Mes notes de frais")).toBeTruthy();
         });
     });
 });
@@ -177,78 +105,248 @@ describe("Given that I am a user on login page", () => {
             expect(screen.getByTestId("form-admin")).toBeTruthy();
         });
     });
+});
+describe("Given that I am a user on login page", () => {
+    beforeEach(() => {
+        document.body.innerHTML = LoginUI();
+        Object.defineProperty(window, "localStorage", {
+            value: {
+                getItem: jest.fn(() => null),
+                setItem: jest.fn(() => null),
+            },
+            writable: true,
+        });
+    });
 
-    describe("When I do fill fields in correct format and I click on admin button Login In", () => {
-        test("Then I should be identified as an HR admin in app", () => {
-            document.body.innerHTML = LoginUI();
-            const inputData = {
-                type: "Admin",
-                email: "johndoe@email.com",
-                password: "azerty",
-                status: "connected",
-            };
+    const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+    };
 
-            const inputEmailUser = screen.getByTestId("admin-email-input");
-            fireEvent.change(inputEmailUser, {
-                target: { value: inputData.email },
-            });
-            expect(inputEmailUser.value).toBe(inputData.email);
+    let PREVIOUS_LOCATION = "";
 
-            const inputPasswordUser = screen.getByTestId(
-                "admin-password-input"
-            );
-            fireEvent.change(inputPasswordUser, {
-                target: { value: inputData.password },
-            });
-            expect(inputPasswordUser.value).toBe(inputData.password);
+    const storeMock = {
+        login: jest.fn().mockResolvedValue({ jwt: "some_jwt_token" }),
+        users: jest.fn().mockReturnThis(),
+        create: jest.fn().mockResolvedValue({}),
+    };
 
-            const form = screen.getByTestId("form-admin");
-
-            // localStorage should be populated with form data
-            Object.defineProperty(window, "localStorage", {
-                value: {
-                    getItem: jest.fn(() => null),
-                    setItem: jest.fn(() => null),
-                },
-                writable: true,
-            });
-
-            // we have to mock navigation to test it
-            const onNavigate = (pathname) => {
-                document.body.innerHTML = ROUTES({ pathname });
-            };
-
-            let PREVIOUS_LOCATION = "";
-
-            const store = jest.fn();
-
+    describe("When I submit the employee form with correct data", () => {
+        test("Then I should be logged in as an employee", async () => {
             const login = new Login({
                 document,
                 localStorage: window.localStorage,
                 onNavigate,
                 PREVIOUS_LOCATION,
-                store,
+                store: storeMock,
             });
 
-            const handleSubmit = jest.fn(login.handleSubmitAdmin);
-            login.login = jest.fn().mockResolvedValue({});
+            const form = screen.getByTestId("form-employee");
+            const inputEmail = screen.getByTestId("employee-email-input");
+            const inputPassword = screen.getByTestId("employee-password-input");
+
+            fireEvent.change(inputEmail, {
+                target: { value: "employee@test.tld" },
+            });
+            fireEvent.change(inputPassword, { target: { value: "employee" } });
+
+            const handleSubmit = jest.fn(login.handleSubmitEmployee);
             form.addEventListener("submit", handleSubmit);
             fireEvent.submit(form);
+
             expect(handleSubmit).toHaveBeenCalled();
-            expect(window.localStorage.setItem).toHaveBeenCalled();
+            await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for promise to resolve
+
+            expect(window.localStorage.setItem).toHaveBeenCalledWith(
+                "user",
+                JSON.stringify({
+                    type: "Employee",
+                    email: "employee@test.tld",
+                    password: "employee",
+                    status: "connected",
+                })
+            );
+            expect(storeMock.login).toHaveBeenCalledWith(
+                JSON.stringify({
+                    email: "employee@test.tld",
+                    password: "employee",
+                })
+            );
+            expect(screen.getByTestId("Bills-employee")).toBeTruthy();
+        });
+    });
+
+    describe("When I submit the admin form with correct data", () => {
+        test("Then I should be logged in as an admin", async () => {
+            const login = new Login({
+                document,
+                localStorage: window.localStorage,
+                onNavigate,
+                PREVIOUS_LOCATION,
+                store: storeMock,
+            });
+
+            // Ensure that the LoginUI includes the admin form
+            document.body.innerHTML = LoginUI();
+
+            const form = screen.getByTestId("form-admin");
+            const inputEmail = screen.getByTestId("admin-email-input");
+            const inputPassword = screen.getByTestId("admin-password-input");
+
+            fireEvent.change(inputEmail, {
+                target: { value: "admin@test.tld" },
+            });
+            fireEvent.change(inputPassword, { target: { value: "admin" } });
+
+            const handleSubmit = jest.fn(login.handleSubmitAdmin);
+            form.addEventListener("submit", handleSubmit);
+            fireEvent.submit(form);
+
+            expect(handleSubmit).toHaveBeenCalled();
+            await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for promise to resolve
+
             expect(window.localStorage.setItem).toHaveBeenCalledWith(
                 "user",
                 JSON.stringify({
                     type: "Admin",
-                    email: inputData.email,
-                    password: inputData.password,
+                    email: "admin@test.tld",
+                    password: "admin",
+                    status: "connected",
+                })
+            );
+            expect(storeMock.login).toHaveBeenCalledWith(
+                JSON.stringify({
+                    email: "admin@test.tld",
+                    password: "admin",
+                })
+            );
+            expect(screen.getByTestId("Dashboard")).toBeTruthy();
+        });
+    });
+
+    describe("When store is not defined", () => {
+        test("Then login should return null", () => {
+            const login = new Login({
+                document,
+                localStorage: window.localStorage,
+                onNavigate,
+                PREVIOUS_LOCATION,
+                store: null,
+            });
+
+            const result = login.login({
+                email: "test@test.com",
+                password: "password",
+            });
+            expect(result).toBeNull();
+        });
+
+        test("Then createUser should return null", () => {
+            const login = new Login({
+                document,
+                localStorage: window.localStorage,
+                onNavigate,
+                PREVIOUS_LOCATION,
+                store: null,
+            });
+
+            const result = login.createUser({
+                email: "test@test.com",
+                password: "password",
+            });
+            expect(result).toBeNull();
+        });
+    });
+
+    describe("When login fails", () => {
+        test("Then it should Employee call createUser", async () => {
+            storeMock.login.mockRejectedValueOnce(new Error("login error"));
+            const spyError = jest.spyOn(console, "error");
+            const login = new Login({
+                document,
+                localStorage: window.localStorage,
+                onNavigate,
+                PREVIOUS_LOCATION,
+                store: storeMock,
+            });
+
+            const form = screen.getByTestId("form-employee");
+            const inputEmail = screen.getByTestId("employee-email-input");
+            const inputPassword = screen.getByTestId("employee-password-input");
+
+            fireEvent.change(inputEmail, {
+                target: { value: "employee@test.com" },
+            });
+            fireEvent.change(inputPassword, { target: { value: "password" } });
+
+            const handleSubmit = jest.fn(login.handleSubmitEmployee);
+            form.addEventListener("submit", handleSubmit);
+            fireEvent.submit(form);
+
+            expect(handleSubmit).toHaveBeenCalled();
+            await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for promise to resolve
+
+            expect(storeMock.create).toHaveBeenCalledWith({
+                data: JSON.stringify({
+                    type: "Employee",
+                    name: "employee",
+                    email: "employee@test.com",
+                    password: "password",
+                }),
+            });
+            expect(window.localStorage.setItem).toHaveBeenCalledWith(
+                "user",
+                JSON.stringify({
+                    type: "Employee",
+                    email: "employee@test.com",
+                    password: "password",
                     status: "connected",
                 })
             );
         });
+        test("Then it should Admin call createUser", async () => {
+            storeMock.login.mockRejectedValueOnce(new Error("login error"));
+            const spyError = jest.spyOn(console, "error");
+            const login = new Login({
+                document,
+                localStorage: window.localStorage,
+                onNavigate,
+                PREVIOUS_LOCATION,
+                store: storeMock,
+            });
+            const form = screen.getByTestId("form-admin");
+            const inputEmail = screen.getByTestId("admin-email-input");
+            const inputPassword = screen.getByTestId("admin-password-input");
 
-        test("It should renders HR dashboard page", () => {
-            expect(screen.queryByText("Validations")).toBeTruthy();
+            fireEvent.change(inputEmail, {
+                target: { value: "employee@test.com" },
+            });
+            fireEvent.change(inputPassword, { target: { value: "password" } });
+
+            const handleSubmit = jest.fn(login.handleSubmitAdmin);
+            form.addEventListener("submit", handleSubmit);
+            fireEvent.submit(form);
+
+            expect(handleSubmit).toHaveBeenCalled();
+            await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for promise to resolve
+
+            expect(storeMock.create).toHaveBeenCalledWith({
+                data: JSON.stringify({
+                    type: "Admin",
+                    name: "employee",
+                    email: "employee@test.com",
+                    password: "password",
+                }),
+            });
+            expect(window.localStorage.setItem).toHaveBeenCalledWith(
+                "user",
+                JSON.stringify({
+                    type: "Admin",
+
+                    email: "employee@test.com",
+                    password: "password",
+                    status: "connected",
+                })
+            );
         });
     });
 });

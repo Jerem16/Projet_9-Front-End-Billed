@@ -81,20 +81,22 @@ export default class {
         this.document = document;
         this.onNavigate = onNavigate;
         this.store = store;
-        /* istanbul ignore next */
-        $("#arrow-icon1")
-            .off("click")
-            .on("click", (e) => this.handleShowTickets(e, bills, 1));
-        /* istanbul ignore next */
-        $("#arrow-icon2")
-            .off("click")
-            .on("click", (e) => this.handleShowTickets(e, bills, 2));
-        /* istanbul ignore next */
-        $("#arrow-icon3")
-            .off("click")
-            .on("click", (e) => this.handleShowTickets(e, bills, 3));
+
+        this.addClickHandler("#arrow-icon1", (e) =>
+            this.handleShowTickets(e, bills, 1)
+        );
+        this.addClickHandler("#arrow-icon2", (e) =>
+            this.handleShowTickets(e, bills, 2)
+        );
+        this.addClickHandler("#arrow-icon3", (e) =>
+            this.handleShowTickets(e, bills, 3)
+        );
 
         new Logout({ localStorage, onNavigate });
+    }
+
+    addClickHandler(selector, handler) {
+        $(selector).off("click").on("click", handler);
     }
 
     handleClickIconEye = () => {
@@ -130,15 +132,13 @@ export default class {
             this.counter++;
         }
 
-        $("#icon-eye-d").off("click").on("click", this.handleClickIconEye);
-        /* istanbul ignore next */
-        $("#btn-accept-bill")
-            .off("click")
-            .on("click", (e) => this.handleAcceptSubmit(e, bill));
-        /* istanbul ignore next */
-        $("#btn-refuse-bill")
-            .off("click")
-            .on("click", (e) => this.handleRefuseSubmit(e, bill));
+        this.addClickHandler("#icon-eye-d", this.handleClickIconEye);
+        this.addClickHandler("#btn-accept-bill", (e) =>
+            this.handleAcceptSubmit(e, bill)
+        );
+        this.addClickHandler("#btn-refuse-bill", (e) =>
+            this.handleRefuseSubmit(e, bill)
+        );
     }
 
     handleAcceptSubmit = (e, bill) => {
@@ -167,7 +167,7 @@ export default class {
 
         if (this.index === undefined || this.index !== index)
             this.index = index;
-        /* istanbul ignore next */
+
         if (this.counter % 2 === 0) {
             $(`#arrow-icon${this.index}`).css({
                 transform: "rotate(0deg)",
@@ -183,21 +183,11 @@ export default class {
             $(`#status-bills-container${this.index}`).html("");
             this.counter++;
         }
-        // Dans :
-        // $(`#open-bill${bill.id}`).click((e) =>
-        //     this.handleEditTicket(e, bill, bills)
-        // );
-        // la méthode "click" de jQuery est dépréciée
-        // il est recommandé d'utiliser la méthode "on" à la place.
+
         bills.forEach((bill) => {
-            bills.forEach((bill) => {
-                $(`#open-bill${bill.id}`)
-                    // off('click') assure qu'aucun gestionnaire d'événements click précédent ne reste attaché au gestionnaire d'événements avec on('click')
-                    .off("click")
-                    .on("click", (e) => {
-                        this.handleEditTicket(e, bill, bills);
-                    });
-            });
+            this.addClickHandler(`#open-bill${bill.id}`, (e) =>
+                this.handleEditTicket(e, bill, bills)
+            );
         });
 
         return bills;
