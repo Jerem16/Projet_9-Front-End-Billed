@@ -1,15 +1,13 @@
 import { ROUTES_PATH } from "../constants/routes.js";
 import { formatStatus, verifyDate } from "../app/format.js";
 import Logout from "./Logout.js";
-// import mockedBills from "../__mocks__/storeError.js";
-// import mockedBills from "../__mocks__/store.js";
+
 
 export default class {
     constructor({ document, onNavigate, store, localStorage }) {
         this.document = document;
         this.onNavigate = onNavigate;
         this.store = store;
-        // this.store = mockedBills;
         const buttonNewBill = document.querySelector(
             `button[data-testid="btn-new-bill"]`
         );

@@ -548,18 +548,15 @@ describe("When I click on the arrow icon", () => {
             localStorage: window.localStorage,
         });
 
-        // dashboard.handleShowTickets();
-        // Appel de render pour ajouter les écouteurs d'événements
-        // dashboard.render();
+        // ? Appel de render pour ajouter les écouteurs d'événements
 
+        // ! "arrow-icon1"
         // Attendre que l'icône de flèche soit disponible dans le DOM
+
         await waitFor(() => screen.getByTestId("arrow-icon1"));
-        // const billsData = await dashboard.handleShowTickets();
         const icon = screen.getByTestId("arrow-icon1");
 
-        // Initialement, le container doit être vide et l'icône non-rotée
         expect(screen.getByTestId("status-bills-container1")).toBeTruthy();
-        // expect(icon).toHaveStyle("transform: rotate(0deg)");
 
         // Cliquer sur l'icône pour afficher les billets
         fireEvent.click(icon);
@@ -570,5 +567,37 @@ describe("When I click on the arrow icon", () => {
         fireEvent.click(icon);
 
         expect(icon).toHaveStyle("transform: rotate(90deg)");
+
+        // ! "arrow-icon2"
+        await waitFor(() => screen.getByTestId("arrow-icon2"));
+        const icon2 = screen.getByTestId("arrow-icon2");
+
+        expect(screen.getByTestId("status-bills-container2")).toBeTruthy();
+
+        // Cliquer sur l'icône pour afficher les billets
+        fireEvent.click(icon2);
+        expect(screen.getByTestId("status-bills-container2")).toBeTruthy();
+        expect(icon2).toHaveStyle("transform: rotate(0deg)");
+
+        // Re-cliquer sur l'icône pour cacher les billets
+        fireEvent.click(icon2);
+
+        expect(icon2).toHaveStyle("transform: rotate(90deg)");
+
+        // ! "arrow-icon3"
+        await waitFor(() => screen.getByTestId("arrow-icon3"));
+        const icon3 = screen.getByTestId("arrow-icon3");
+
+        expect(screen.getByTestId("status-bills-container3")).toBeTruthy();
+
+        // Cliquer sur l'icône pour afficher les billets
+        fireEvent.click(icon3);
+        expect(screen.getByTestId("status-bills-container3")).toBeTruthy();
+        expect(icon3).toHaveStyle("transform: rotate(0deg)");
+
+        // Re-cliquer sur l'icône pour cacher les billets
+        fireEvent.click(icon3);
+
+        expect(icon3).toHaveStyle("transform: rotate(90deg)");
     });
 });

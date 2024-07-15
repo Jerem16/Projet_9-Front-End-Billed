@@ -32,7 +32,7 @@ export default ({ data, loading, error }) => {
               }) </h3>
               <span class='arrow-icon' id='arrow-icon2' data-testid='arrow-icon2'>${ArrowIcon}</span>
             </div>
-            <div class='status-bills-container' id='status-bills-container2'>
+            <div class='status-bills-container' id='status-bills-container2' data-testid='status-bills-container2'>
             </div>
 
             <div class='status-bills-header' style='margin-top: 20px;'>
@@ -41,7 +41,7 @@ export default ({ data, loading, error }) => {
               }) </h3>
               <span class='arrow-icon' id='arrow-icon3' data-testid='arrow-icon3'>${ArrowIcon}</span>
             </div>
-            <div class='status-bills-container' id='status-bills-container3'>
+            <div class='status-bills-container' id='status-bills-container3' data-testid='status-bills-container3'>
             </div>
 
         </div>
